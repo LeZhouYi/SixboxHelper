@@ -1,0 +1,19 @@
+[project]
+name = "sixboxhelper"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "mhhu",email = "mhhu@liangzhicn.com"}
+]
+requires-python = ">=3.12"
+dependencies = [
+    "dotenv (>=0.9.9,<0.10.0)",
+    "flask (>=3.1.3,<4.0.0)",
+    "pymupdf (>=1.27.1,<2.0.0)",
+    "pillow (>=12.1.1,<13.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

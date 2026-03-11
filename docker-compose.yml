@@ -1,0 +1,13 @@
+services:
+    app:
+        build: .
+        container_name: example_name
+        volumes:
+            - ./data:/app/data
+        ports:
+            - "7231:7231"
+        environment:
+            - ENV=production
+volumes:
+    app_data:
+        driver: local
