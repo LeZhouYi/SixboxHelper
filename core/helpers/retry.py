@@ -29,3 +29,16 @@ def check_with_retry(func: Callable, args: Tuple = (), expect_value: Any = True,
             if attempt < retry:
                 time.sleep(delay)
     return result
+
+def check_instance_with_retry(func: Callable, args: Tuple = (), class_name: str = "", retry: int = 1, delay: int = 10,
+                   kwargs: dict = None):
+    """若不符合预期，则重试，则重试"""
+    kwargs = kwargs or {}
+    for attempt in range(retry + 1):
+        result = func(*args, **kwargs)
+        if type(result).__name__ == class_name:
+            return result
+        else:
+            if attempt < retry:
+                time.sleep(delay)
+    return None

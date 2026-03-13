@@ -1,5 +1,4 @@
 from io import BytesIO
-from typing import Tuple, List
 
 import fitz
 from PIL import Image, ImageDraw

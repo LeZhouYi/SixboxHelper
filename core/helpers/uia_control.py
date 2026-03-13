@@ -64,6 +64,11 @@ def debug_element(element: WindowSpecification):
     else:
         raise Exception("元素不存在")
 
+def debug_element_image(element: WindowSpecification):
+    """调试元素"""
+    logger.info(f"调试元素：{element}")
+    img = element.capture_as_image()
+    img.show()
 
 def debug_window(window: WindowSpecification):
     """调试窗口"""
@@ -113,6 +118,18 @@ def find_element_by_descendants(window: WindowSpecification, title_re: str, clas
             return element
     raise Exception(f"查找元素失败：title_re:{title_re}, class_name: {class_name}")
 
+def find_elements_by_descendants(window: WindowSpecification, title_re: str, class_name: str, limit:int = 0):
+    """通过descendants来遍历查找多个元素"""
+    logger.info(f"通过descendants查找多个元素：title_re:{title_re}, class_name:{class_name}")
+    elements = []
+    for element in window.descendants():
+        if re.search(title_re, element.window_text()) and type(element).__name__ == class_name:
+            elements.append(element)
+        if 0 < limit == len(elements):
+            break
+    if len(elements) == 0 or (0 < limit != len(elements)):
+        raise Exception(f"查找多个元素时未预期：{len(elements)}, expect: {limit}(零代表任意正整数)")
+    return elements
 
 def click_element(element: WindowSpecification, timeout: int = 10, rx: float = 0.5, ry: float = 0.5, **kwargs):
     """点击元素"""
