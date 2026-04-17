@@ -1,6 +1,8 @@
 from io import BytesIO
+from typing import Union, LiteralString, Tuple
 
 import fitz
+import pdfplumber
 from PIL import Image, ImageDraw
 from pymupdf import Document, Page
 
@@ -79,3 +81,71 @@ def get_lines_in_rect(page: Page, rect: fitz.Rect) -> list[str]:
             if is_in:
                 lines.append(line_text)
     return lines
+
+def extract_structured_lines_text(page: pdfplumber.pdf.Page, y_threshold=5):
+    """
+    提取 PDF 页面的结构化行（按表格物理位置排序）。
+    :param page:
+    :param y_threshold: 同一行的垂直容差 (像素)，默认 5
+    :return: 直接返回按物理位置排版好的纯文本（自动分行、空格）
+    """
+    # 先按 top (垂直坐标) 排序，方便聚类
+    words_sorted = sorted(page.extract_words(), key=lambda k: k['top'])
+    lines = []
+    current_line = []
+    last_top = None
+    for w in words_sorted:
+        # 按垂直坐标聚类成行，如果垂直距离超过阈值，视为新的一行
+        if last_top is None or abs(w['top'] - last_top) > y_threshold:
+            if current_line:
+                # 对当前行内的单词按 x0 (水平坐标) 排序
+                current_line.sort(key=lambda k: k['x0'])
+                lines.append(current_line)
+            current_line = []
+        current_line.append(w)
+        last_top = w['top']
+    # 处理最后一行
+    if current_line:
+        current_line.sort(key=lambda k: k['x0'])
+        lines.append(current_line)
+    result_text = "\n".join([
+        " ".join([w['text'] for w in line]).strip()
+        for line in lines
+    ])
+    return result_text
+
+
+def extract_pages(input_pdf: Union[LiteralString, str], output_pdf: Union[LiteralString, str], indexes: list):
+    """
+    使用 PyMuPDF 提取页面
+    :param output_pdf:
+    :param input_pdf:
+    :param indexes: 索引列表（从0开始计数）
+    """
+    doc = fitz.open(input_pdf)
+    # select() 方法会根据提供的索引列表重新排列或筛选页面
+    doc.select(indexes)
+    doc.save(output_pdf)
+    doc.close()
+
+
+def remove_spans_by_bbox(input_pdf: Union[LiteralString, str], output_pdf: Union[LiteralString, str], page_index: int,
+                         bbox: Tuple):
+    """
+    移除指定页面、指定 bbox 范围内的文字内容
+    :param page_index:
+    :param output_pdf:
+    :param input_pdf:
+    :param bbox: 格式为 (x0, y0, x1, y1) 的元组或列表
+    """
+    doc = fitz.open(input_pdf)
+    page = doc[page_index]
+
+    page.add_redact_annot(bbox)
+
+    # 应用编辑：永久删除区域内的所有文字/图像内容
+    page.apply_redactions()
+
+    # 使用 garbage=4 和 deflate=True 可以进一步清理文件并压缩空间
+    doc.save(output_pdf, garbage=4, deflate=True)
+    doc.close()

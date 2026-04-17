@@ -12,7 +12,7 @@ logging.basicConfig(
     handlers=[
         logging.StreamHandler(sys.stdout),
         TimedRotatingFileHandler(
-            filename="log.log",
+            filename=f"{logger_save_path}/log.log",
             when="midnight",
             interval=1,
             backupCount=7,
