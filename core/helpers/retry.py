@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import Callable, Tuple, Any
 
@@ -13,11 +14,12 @@ def run_with_retry(func: Callable, args: Tuple = (), retry: int = 1, delay: int 
             last_error = e
             if attempt < retry:
                 time.sleep(delay)
+                logging.info(f"出现错误：第{attempt + 1}次重试，error:{e}")
     raise last_error
 
 
 def check_with_retry(func: Callable, args: Tuple = (), expect_value: Any = True, retry: int = 1, delay: int = 10,
-                   kwargs: dict = None):
+                     kwargs: dict = None):
     """若不符合预期，则重试，则重试"""
     kwargs = kwargs or {}
     result = None
@@ -28,10 +30,12 @@ def check_with_retry(func: Callable, args: Tuple = (), expect_value: Any = True,
         else:
             if attempt < retry:
                 time.sleep(delay)
+                logging.info(f"不符合预期:{expect_value} 第{attempt + 1}次重试")
     return result
 
+
 def check_instance_with_retry(func: Callable, args: Tuple = (), class_name: str = "", retry: int = 1, delay: int = 10,
-                   kwargs: dict = None):
+                              kwargs: dict = None):
     """若不符合预期，则重试，则重试"""
     kwargs = kwargs or {}
     for attempt in range(retry + 1):
@@ -41,4 +45,5 @@ def check_instance_with_retry(func: Callable, args: Tuple = (), class_name: str 
         else:
             if attempt < retry:
                 time.sleep(delay)
+                logging.info(f"不符合预期实例:{type(result).__name__} 第{attempt + 1}次重试")
     return None
