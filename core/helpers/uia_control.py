@@ -3,7 +3,7 @@ import os.path
 import re
 import subprocess
 import time
-from typing import LiteralString, Union
+from typing import LiteralString, Union, Optional
 from uuid import uuid4
 
 import cv2
@@ -95,11 +95,12 @@ def debug_app(app: Application):
     print(f"top_window: {app.top_window().window_text()}")
 
 
-def find_desktop_window(desktop: Desktop, title_re: str, class_name: str):
+def find_desktop_window(desktop: Desktop, title_re: str, class_name: Optional[str], visible_only:Optional[bool]=True):
     """查找桌面的窗口"""
     logging.info(f"查找桌面的窗口：title_re:{title_re}, class_name:{class_name}")
-    for window in desktop.windows(visible_only=True):
-        if re.search(title_re, window.window_text()) and type(window).__name__ == class_name:
+    for window in desktop.windows(visible_only=visible_only):
+        logging.info(window.window_text())
+        if re.search(title_re, window.window_text()) and (class_name is None or type(window).__name__ == class_name):
             return window
     raise Exception(f"查找窗口失败：title_re:{title_re}, class_name: {class_name}")
 
@@ -113,21 +114,22 @@ def find_element_by_children(window: WindowSpecification, title_re: str, class_n
     raise Exception(f"查找元素失败：title_re:{title_re}, class_name: {class_name}")
 
 
-def find_element_by_descendants(window: WindowSpecification, title_re: str, class_name: str):
+def find_element_by_descendants(window: WindowSpecification, title_re: str, class_name: Optional[str]):
     """通过descendants来遍历查找元素"""
     logging.info(f"通过descendants查找元素：title_re:{title_re}, class_name:{class_name}")
     for element in window.descendants():
-        if re.search(title_re, element.window_text()) and type(element).__name__ == class_name:
+        logging.info(f"当前元素名称：{element.window_text()}")
+        if re.search(title_re, element.window_text()) and (class_name is None or type(element).__name__ == class_name):
             return element
     raise Exception(f"查找元素失败：title_re:{title_re}, class_name: {class_name}")
 
 
-def find_elements_by_descendants(window: WindowSpecification, title_re: str, class_name: str, limit: int = 0):
+def find_elements_by_descendants(window: WindowSpecification, title_re: str, class_name: Optional[str], limit: int = 0):
     """通过descendants来遍历查找多个元素"""
     logging.info(f"通过descendants查找多个元素：title_re:{title_re}, class_name:{class_name}")
     elements = []
     for element in window.descendants():
-        if re.search(title_re, element.window_text()) and type(element).__name__ == class_name:
+        if re.search(title_re, element.window_text()) and (class_name is None or type(element).__name__ == class_name):
             elements.append(element)
         if 0 < limit == len(elements):
             break
